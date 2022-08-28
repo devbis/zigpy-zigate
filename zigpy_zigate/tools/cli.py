@@ -16,7 +16,7 @@ async def main():
     parser.add_argument("command", help="Command to start",
                         choices=["version", "reset", "erase_persistent",
                                  "set_time", "get_time", "set_led", "set_certification", "set_tx_power", "management_network_request",
-                                 "loop"])
+                                 "loop", "dump"])
     parser.add_argument("-p", "--port", help="Port", default='auto')
     parser.add_argument("-d", "--debug", help="Debug log", action='store_true')
     parser.add_argument("-v", "--value", help="Set command's value")
@@ -52,6 +52,14 @@ async def main():
         power = int(args.value or 63)
         print('Set ZiGate TX Power to', power)
         print('Tx power set to', await api.set_tx_power(power))
+    elif args.command == 'dump':
+
+        import msgpack
+        from pprint import pformat
+
+        data = (await api.dump())
+        # print(data)
+        print('Dump', pformat(msgpack.unpackb(data)))
     elif args.command == 'management_network_request':
         await api.reset()
         # await api.set_raw_mode(False)

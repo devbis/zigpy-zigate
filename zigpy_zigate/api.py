@@ -39,6 +39,7 @@ class CommandId(enum.IntEnum):
     MANAGEMENT_NETWORK_UPDATE_REQUEST = 0x004A
     SEND_RAW_APS_DATA_PACKET = 0x0530
     AHI_SET_TX_POWER = 0x0806
+    DUMP_PDM_RECORD = 0x0B00
 
 
 class ResponseId(enum.IntEnum):
@@ -65,8 +66,7 @@ class ResponseId(enum.IntEnum):
     APS_DATA_CONFIRM_FAILED = 0x8702
     AHI_SET_TX_POWER_RSP = 0x8806
     EXTENDED_ERROR = 0x9999
-
-
+    DUMP_PDM_RECORD_RESPONSE = 0x8B00
 
 
 class NonFactoryNewRestartStatus(t.uint8_t, enum.Enum):
@@ -84,6 +84,7 @@ RESPONSES = {
     ResponseId.DEVICE_ANNOUNCE: (t.NWK, t.EUI64, t.uint8_t, t.uint8_t),
     ResponseId.STATUS: (t.Status, t.uint8_t, t.uint16_t, t.Bytes),
     ResponseId.LOG: (t.LogLevel, t.Bytes),
+    ResponseId.DUMP_PDM_RECORD_RESPONSE: (t.Bytes,),
     ResponseId.DATA_INDICATION: (
         t.Status,
         t.uint16_t,
@@ -168,6 +169,7 @@ COMMANDS = {
         t.LBytes,
     ),
     CommandId.AHI_SET_TX_POWER: (t.uint8_t,),
+    CommandId.DUMP_PDM_RECORD: (),
 }
 
 
@@ -394,6 +396,12 @@ class ZiGate:
 
     async def version(self):
         return await self.command(CommandId.GET_VERSION, wait_response=ResponseId.VERSION_LIST)
+
+    async def dump(self):
+        resp = await self.command(CommandId.DUMP_PDM_RECORD, wait_response=ResponseId.DUMP_PDM_RECORD_RESPONSE)
+        resp = resp[0][0]
+        length = int.from_bytes(resp[-3:-1], 'big')
+        return resp[:length]
 
     async def version_str(self):
         version, lqi = await self.version()
